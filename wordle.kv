@@ -1,0 +1,62 @@
+#:kivy 2.3.1
+
+<MainMenuManager>:
+    canvas.before:
+        Color:
+            rgba: 0.12, 0.12, 0.12, 1  # Dark background
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 50
+        spacing: 30
+        size_hint: (0.6, 0.5)
+        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+        
+        Widget:
+            size_hint_y: 0.3
+        
+        Label:
+            id: intro_label
+            text: '[b][size=64sp]SIMPLE [color=6ac764]WORDLE[/color][/size][/b]'
+            markup: True
+            size_hint_y: 0.4
+        
+        Label:
+            text: '[i]Guess the [color=6ac764]word[/color] in [b]6[/b] tries[/i]'
+            markup: True
+            font_size: '18sp'
+            color: 0.7, 0.7, 0.7, 1
+            size_hint_y: 0.2
+        
+        Button:
+            id: start_btn
+            text: 'START GAME'
+            font_size: '24sp'
+            bold: True
+            size_hint: (0.7, None)
+            height: '60dp'
+            pos_hint: {'center_x': 0.5}
+            background_normal: ''
+            background_color: 0.3, 0.7, 0.3, 1  # Green button
+            on_press: root.enter_game()
+            canvas.before:
+                Color:
+                    rgba: 0.3, 0.7, 0.3, 1 if self.state == 'normal' else 0.2, 0.5, 0.2, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [10,]
+        Label:
+            text: '[i]By [b][color=6ac764]24127153[/color][/b][/i]'
+            markup: True
+            font_size: '14sp'
+            size_hint_y: 0.1
+
+<GameBoxLayout>:
+    orientation: 'lr-tb'
+    padding: 10
+    spacing: 10
+    size: (660, 660)

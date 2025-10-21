@@ -1,1 +1,2 @@
-# wordle
+# Wordle
+A wordle app
