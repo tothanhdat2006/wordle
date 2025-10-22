@@ -122,6 +122,14 @@ class GameScreenManager(Screen):
         self.current_row = 0
         self.current_col = 0
 
+        self.word_list = [
+            "apple", "grape", "mango", "pearl", "stone",
+            "chair", "table", "plant", "light", "sound",
+            "crane", "flame", "brick", "sword", "cloud",
+            "coder", "debug", "array", "stack", "queue",
+            "globe", "flock", "brave", "charm", "dwarf",
+            "lunar", "comet", "popup", "pixel", "vivid"
+        ]
         self.num_tries = 6
         self.hidden_text = self.keyword_generator()
         self.max_word_length = len(self.hidden_text)
@@ -129,6 +137,7 @@ class GameScreenManager(Screen):
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
 
+        
         main_container = BoxLayout(orientation='vertical', padding=20, spacing=20)
         
         # Stats
@@ -199,8 +208,8 @@ class GameScreenManager(Screen):
         4. Ignore other keys
         """
         if keycode[1] == 'backspace':
-            self.gamebox_layout.delete_letter_at(self.current_row, self.current_col)
             self.current_col = max(0, self.current_col - 1)
+            self.gamebox_layout.delete_letter_at(self.current_row, self.current_col)
         elif 'a' <= keycode[1] <= 'z' and len(keycode[1]) == 1:
             if self.current_col < self.max_word_length:
                 self.gamebox_layout.add_letter_at(self.current_row, self.current_col, keycode[1].upper())
@@ -314,15 +323,7 @@ class GameScreenManager(Screen):
         """
         Pick a random 5 letters keyword for the game
         """
-        word_list = [
-            "apple", "grape", "mango", "pearl", "stone",
-            "chair", "table", "plant", "light", "sound",
-            "crane", "flame", "brick", "sword", "cloud",
-            "coder", "debug", "array", "stack", "queue",
-            "globe", "flock", "brave", "charm", "dwarf",
-            "lunar", "comet", "popup", "pixel", "vivid"
-        ]
-        return random.choice(word_list).upper()
+        return random.choice(self.word_list).upper()
     
     def update_stats_display(self):
         """
