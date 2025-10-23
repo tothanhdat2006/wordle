@@ -471,7 +471,9 @@ class GameScreenManager(Screen):
         """
         Pick a random 5 letters keyword for the game
         """
-        return random.choice(self.word_list).upper()
+        keyword = random.choice(self.word_list).upper()
+        print(keyword)
+        return keyword
     
     def update_stats_display(self):
         """
