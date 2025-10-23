@@ -9,6 +9,8 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.popup import Popup
 from kivy.core.window import Window
 from kivy.lang import Builder
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.widget import Widget
 
 
 import random
@@ -23,6 +25,103 @@ class MainMenuManager(Screen):
 
     def enter_game(self):
         self.manager.current = 'game_screen'
+
+"""
+Virtual keyboard widget for the Wordle game
+"""
+class VirtualKeyboard(BoxLayout):
+    def __init__(self, handle_key_input, **kwargs):
+        super().__init__(**kwargs)
+        self.orientation = 'vertical'
+        self.spacing = 3
+        self.padding = 5
+        self.size_hint_y = None
+        self.height = 140
+        
+        self.handle_key_input = handle_key_input
+        self.key_buttons = {}
+        
+        keyboard_rows = [
+            ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+            ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+            ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACKSPACE']
+        ]
+        
+        for row in keyboard_rows:
+            row_layout = BoxLayout(spacing=3, size_hint_y=1)
+            
+            # add spacing left
+            if len(row) == 9:
+                row_layout.add_widget(Widget(size_hint_x=0.5))
+            
+            for key in row:
+                if key == 'ENTER' or key == 'BACKSPACE':
+                    btn = Button(
+                        text=key,
+                        font_size='11sp',
+                        bold=True,
+                        size_hint_x=1,
+                        background_normal='',
+                        background_color=(0.5, 0.5, 0.5, 1)
+                    )
+                else:
+                    btn = Button(
+                        text=key,
+                        font_size='13sp',
+                        bold=True,
+                        size_hint_x=0.5,
+                        background_normal='',
+                        background_color=(0.5, 0.5, 0.5, 1)
+                    )
+                
+                btn.bind(on_press=self.on_button_press)
+                row_layout.add_widget(btn)
+                
+                if key not in ['ENTER', 'BACKSPACE']:
+                    self.key_buttons[key] = btn
+            
+            # add spacing right
+            if len(row) == 9:
+                row_layout.add_widget(Widget(size_hint_x=0.5))
+            
+            self.add_widget(row_layout)
+    
+    def on_button_press(self, button):
+        """
+        Handle virtual keyboard button press
+        """
+        key = button.text
+        if key == 'BACKSPACE':
+            self.handle_key_input('backspace')
+        elif key == 'ENTER':
+            self.handle_key_input('enter')
+        else:
+            self.handle_key_input(key.lower())
+    
+    def update_key_color(self, letter, state):
+        """
+        Update the color of a key based on its state
+        state: 'correct' (green), 'present' (yellow), 'absent' (gray)
+        """
+        letter = letter.upper()
+        if letter in self.key_buttons:
+            button = self.key_buttons[letter]
+            current_color = button.background_color
+            
+            # correct > present > absent
+            if state == 'correct':
+                button.background_color = (0.4, 0.7, 0.4, 1)  # Green
+            elif state == 'present':
+                if current_color != (0.4, 0.7, 0.4, 1):
+                    button.background_color = (0.8, 0.7, 0.2, 1)  # Yellow
+            elif state == 'absent':
+                if current_color == (0.5, 0.5, 0.5, 1):
+                    button.background_color = (0.3, 0.3, 0.3, 1)  # Dark gray
+    
+    def reset_keyboard(self):
+        """Reset all key colors to default"""
+        for button in self.key_buttons.values():
+            button.background_color = (0.5, 0.5, 0.5, 1)
 
 """
 Game board layout
@@ -74,29 +173,41 @@ class GameBoxLayout(StackLayout):
         Args:
             row (int): Current row index
         Return:
-            Number of correct letters in correct position
+            tuple: (Number of correct letters in correct position, dict of letter states)
         """
         num_corrects = 0
+        letter_states = {}
+        
         for c in range(self.max_word_length):
             index = cur_row * self.max_word_length + c
             word_box = self.children[len(self.children) - 1 - index]
+            letter = word_box.text
             
             word_box.canvas.before.clear() #important!!!!!!!!!!!!!
             
             if word_box.text == self.hidden_text[c]:
+                num_corrects += 1
+                letter_states[letter] = 'correct'
                 with word_box.canvas.before:
                     Color(0, 1, 0, 1)  # Green (for correct letters in correct position)
                     word_box.rect = Rectangle(size=word_box.size, pos=word_box.pos)
-                num_corrects += 1
+
             elif word_box.text in self.hidden_text:
+                if letter not in letter_states or letter_states[letter] != 'correct':
+                    letter_states[letter] = 'present'
                 with word_box.canvas.before:
                     Color(1, 1, 0, 1)  # Yellow (for correct letters in wrong position)
                     word_box.rect = Rectangle(size=word_box.size, pos=word_box.pos)
+
             else:
+                if letter not in letter_states:
+                    letter_states[letter] = 'absent'
+
                 with word_box.canvas.before:
                     Color(0.5, 0.5, 0.5, 1)  # Gray (for incorrect letters)
                     word_box.rect = Rectangle(size=word_box.size, pos=word_box.pos)
-        return num_corrects
+
+        return num_corrects, letter_states
 
     def add_letter_at(self, row, col, letter):
         index = row * self.max_word_length + col
@@ -165,11 +276,15 @@ class GameScreenManager(Screen):
         stats_layout.add_widget(self.wins_label)
         
         # Game board
-        self.game_main_layout = AnchorLayout(anchor_x='center', anchor_y='center', size_hint_y=0.7)
+        self.game_main_layout = AnchorLayout(anchor_x='center', anchor_y='center', size_hint_y=0.6)
         self.gamebox_layout = GameBoxLayout(hidden_text=self.hidden_text)
         self.game_main_layout.add_widget(self.gamebox_layout)
         
-        button_layout = BoxLayout(size_hint_y=0.1, spacing=20, size_hint_x=0.5, pos_hint={'center_x': 0.5})
+        # Virtual keyboard
+        self.virtual_keyboard = VirtualKeyboard(handle_key_input=self.handle_key_input, size_hint_y=None)
+        self.virtual_keyboard.height = 140
+        
+        button_layout = BoxLayout(size_hint_y=0.08, spacing=20, size_hint_x=0.5, pos_hint={'center_x': 0.5})
         
         self.surrender_btn = Button(
             text='SURRENDER',
@@ -192,8 +307,45 @@ class GameScreenManager(Screen):
         
         main_container.add_widget(stats_layout)
         main_container.add_widget(self.game_main_layout)
+        main_container.add_widget(self.virtual_keyboard)
         main_container.add_widget(button_layout)
         self.add_widget(main_container)
+
+    def handle_key_input(self, key):
+        """
+        Handle keyboard input for physical and virtual keyboards
+        
+        Args:
+            key (str): The key pressed ('backspace', 'enter', or a letter)
+        """
+        if key == 'backspace':
+            self.current_col = max(0, self.current_col - 1)
+            self.gamebox_layout.delete_letter_at(self.current_row, self.current_col)
+        elif key == 'enter':
+            if self.current_col < self.max_word_length:
+                print("Not enough letters entered.")
+                return True
+            num_correct, letter_states = self.gamebox_layout.check_current_row(self.current_row)
+            
+            # Update virtual keyboard color
+            for letter, state in letter_states.items():
+                self.virtual_keyboard.update_key_color(letter, state)
+            
+            self.current_row += 1
+            self.current_col = 0
+            
+            # Winning state
+            if num_correct == self.max_word_length:
+                self.handle_win()
+                
+            # Game over state
+            elif self.current_row >= self.num_tries:
+                self.handle_game_over()
+        elif len(key) == 1 and 'a' <= key <= 'z':
+            if self.current_col < self.max_word_length:
+                self.gamebox_layout.add_letter_at(self.current_row, self.current_col, key.upper())
+                self.current_col += 1
+        return True
 
     def _keyboard_closed(self):
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
@@ -208,116 +360,112 @@ class GameScreenManager(Screen):
         4. Ignore other keys
         """
         if keycode[1] == 'backspace':
-            self.current_col = max(0, self.current_col - 1)
-            self.gamebox_layout.delete_letter_at(self.current_row, self.current_col)
+            self.handle_key_input('backspace')
         elif 'a' <= keycode[1] <= 'z' and len(keycode[1]) == 1:
-            if self.current_col < self.max_word_length:
-                self.gamebox_layout.add_letter_at(self.current_row, self.current_col, keycode[1].upper())
-                self.current_col += 1
+            self.handle_key_input(keycode[1])
         elif keycode[1] == 'enter':
-            if self.current_col < self.max_word_length:
-                print("Not enough letters entered.")
-                return True
-            num_correct = self.gamebox_layout.check_current_row(self.current_row)
-            self.current_row += 1
-            self.current_col = 0
-            
-            # Winning state
-            if num_correct == self.max_word_length:
-                self.total_games += 1
-                self.total_wins += 1
-                self.winning_streak += 1
-                self.update_stats_display()
-                
-                winning_layout = BoxLayout(orientation='vertical', padding=20, spacing=15)
-                
-                # labels
-                congrats_label = Label(
-                    text=f'[b][size=32sp][color=6ac764]CONGRATULATIONS![/color][/size][/b]',
-                    markup=True,
-                    size_hint_y=0.25
-                )
-                tries_text = f'[size=20sp]You found the word in [b][color=6ac764]{self.current_row}[/color][/b] {"try" if self.current_row == 1 else "tries"}![/size]'
-                tries_label = Label(text=tries_text, markup=True, size_hint_y=0.15)
-                # show streak info
-                streak_text = f'[size=22sp]Winning Streak: [b][color=ff9500]{self.winning_streak}[/color][/b][/size]'
-                streak_info_label = Label(text=streak_text, markup=True, size_hint_y=0.15)
-                answer_label = Label(
-                    text=f'[size=28sp]The word was: [b][color=6ac764]{self.gamebox_layout.hidden_text}[/color][/b][/size]',
-                    markup=True,
-                    size_hint_y=0.25
-                )
-                
-                
-                button_layout = BoxLayout(size_hint_y=0.2, spacing=10)
-                play_again_btn = Button(text='PLAY AGAIN', background_color=(0.3, 0.7, 0.3, 1), bold=True)
-                menu_btn = Button(text='MAIN MENU', background_color=(0.5, 0.5, 0.5, 1), bold=True)
-                button_layout.add_widget(play_again_btn)
-                button_layout.add_widget(menu_btn)
-                
-                win_popup = Popup(
-                    title='Victory!',
-                    content=winning_layout,
-                    size_hint=(0.7, 0.5),
-                    separator_color=(0.4, 0.8, 0.4, 1)
-                )
-                
-                play_again_btn.bind(on_release=lambda x: self.restart_game(win_popup))
-                menu_btn.bind(on_release=lambda x: self.back_to_menu_with_reset(win_popup))
-                winning_layout.add_widget(congrats_label)
-                winning_layout.add_widget(tries_label)
-                winning_layout.add_widget(streak_info_label)
-                winning_layout.add_widget(answer_label)
-                winning_layout.add_widget(button_layout)
-                win_popup.open()
-                
-            # Game over state
-            if self.current_row >= self.num_tries:
-                self.total_games += 1
-                self.winning_streak = 0  # reset streak when loss
-                self.update_stats_display()
-                
-                gameover_layout = BoxLayout(orientation='vertical', padding=20, spacing=15)
-                
-                # labels
-                gameover_label = Label(
-                    text='[b][size=32sp][color=c9b458]GAME OVER[/color][/size][/b]',
-                    markup=True,
-                    size_hint_y=0.3
-                )
-                fail_label = Label(
-                    text='[size=18sp]Better luck next time![/size]',
-                    markup=True,
-                    size_hint_y=0.2
-                )
-                answer_label = Label(
-                    text=f'[size=24sp]The word was: [b][color=ff6b6b]{self.gamebox_layout.hidden_text}[/color][/b][/size]',
-                    markup=True,
-                    size_hint_y=0.3
-                )
-                
-                button_layout = BoxLayout(size_hint_y=0.2, spacing=10)
-                try_again_btn = Button(text='TRY AGAIN', background_color=(0.3, 0.7, 0.3, 1), bold=True)
-                menu_btn = Button(text='MAIN MENU', background_color=(0.5, 0.5, 0.5, 1), bold=True)
-                button_layout.add_widget(try_again_btn)
-                button_layout.add_widget(menu_btn)
-                
-                gameover_popup = Popup(
-                    title='Game Over',
-                    content=gameover_layout,
-                    size_hint=(0.7, 0.5),
-                    separator_color=(0.8, 0.4, 0.4, 1)
-                )
-                try_again_btn.bind(on_release=lambda x: self.restart_game(gameover_popup))
-                menu_btn.bind(on_release=lambda x: self.back_to_menu_with_reset(gameover_popup))
-                gameover_layout.add_widget(gameover_label)
-                gameover_layout.add_widget(fail_label)
-                gameover_layout.add_widget(answer_label)
-                gameover_layout.add_widget(button_layout)
-                gameover_popup.open()
+            self.handle_key_input('enter')
         else:
             pass
         return True
+    
+    def handle_win(self):
+        """
+        Handle winning state
+        """
+        self.total_games += 1
+        self.total_wins += 1
+        self.winning_streak += 1
+        self.update_stats_display()
+        
+        winning_layout = BoxLayout(orientation='vertical', padding=20, spacing=15)
+        
+        # labels
+        congrats_label = Label(
+            text=f'[b][size=32sp][color=6ac764]CONGRATULATIONS![/color][/size][/b]',
+            markup=True,
+            size_hint_y=0.25
+        )
+        tries_text = f'[size=20sp]You found the word in [b][color=6ac764]{self.current_row}[/color][/b] {"try" if self.current_row == 1 else "tries"}![/size]'
+        tries_label = Label(text=tries_text, markup=True, size_hint_y=0.15)
+        # show streak info
+        streak_text = f'[size=22sp]Winning Streak: [b][color=ff9500]{self.winning_streak}[/color][/b][/size]'
+        streak_info_label = Label(text=streak_text, markup=True, size_hint_y=0.15)
+        answer_label = Label(
+            text=f'[size=28sp]The word was: [b][color=6ac764]{self.gamebox_layout.hidden_text}[/color][/b][/size]',
+            markup=True,
+            size_hint_y=0.25
+        )
+        
+        
+        button_layout = BoxLayout(size_hint_y=0.2, spacing=10)
+        play_again_btn = Button(text='PLAY AGAIN', background_color=(0.3, 0.7, 0.3, 1), bold=True)
+        menu_btn = Button(text='MAIN MENU', background_color=(0.5, 0.5, 0.5, 1), bold=True)
+        button_layout.add_widget(play_again_btn)
+        button_layout.add_widget(menu_btn)
+        
+        win_popup = Popup(
+            title='Victory!',
+            content=winning_layout,
+            size_hint=(0.7, 0.5),
+            separator_color=(0.4, 0.8, 0.4, 1)
+        )
+        
+        play_again_btn.bind(on_release=lambda x: self.restart_game(win_popup))
+        menu_btn.bind(on_release=lambda x: self.back_to_menu_with_reset(win_popup))
+        winning_layout.add_widget(congrats_label)
+        winning_layout.add_widget(tries_label)
+        winning_layout.add_widget(streak_info_label)
+        winning_layout.add_widget(answer_label)
+        winning_layout.add_widget(button_layout)
+        win_popup.open()
+    
+    def handle_game_over(self):
+        """
+        Handle game over state
+        """
+        self.total_games += 1
+        self.winning_streak = 0  # reset streak when loss
+        self.update_stats_display()
+        
+        gameover_layout = BoxLayout(orientation='vertical', padding=20, spacing=15)
+        
+        # labels
+        gameover_label = Label(
+            text='[b][size=32sp][color=c9b458]GAME OVER[/color][/size][/b]',
+            markup=True,
+            size_hint_y=0.3
+        )
+        fail_label = Label(
+            text='[size=18sp]Better luck next time![/size]',
+            markup=True,
+            size_hint_y=0.2
+        )
+        answer_label = Label(
+            text=f'[size=24sp]The word was: [b][color=ff6b6b]{self.gamebox_layout.hidden_text}[/color][/b][/size]',
+            markup=True,
+            size_hint_y=0.3
+        )
+        
+        button_layout = BoxLayout(size_hint_y=0.2, spacing=10)
+        try_again_btn = Button(text='TRY AGAIN', background_color=(0.3, 0.7, 0.3, 1), bold=True)
+        menu_btn = Button(text='MAIN MENU', background_color=(0.5, 0.5, 0.5, 1), bold=True)
+        button_layout.add_widget(try_again_btn)
+        button_layout.add_widget(menu_btn)
+        
+        gameover_popup = Popup(
+            title='Game Over',
+            content=gameover_layout,
+            size_hint=(0.7, 0.5),
+            separator_color=(0.8, 0.4, 0.4, 1)
+        )
+        try_again_btn.bind(on_release=lambda x: self.restart_game(gameover_popup))
+        menu_btn.bind(on_release=lambda x: self.back_to_menu_with_reset(gameover_popup))
+        gameover_layout.add_widget(gameover_label)
+        gameover_layout.add_widget(fail_label)
+        gameover_layout.add_widget(answer_label)
+        gameover_layout.add_widget(button_layout)
+        gameover_popup.open()
     
     def keyword_generator(self):
         """
@@ -431,6 +579,7 @@ class GameScreenManager(Screen):
         self.hidden_text = self.keyword_generator()
         self.gamebox_layout.update_hidden_text(self.hidden_text)
         self.gamebox_layout.reset()
+        self.virtual_keyboard.reset_keyboard()
     
     def back_to_menu(self):
         self.manager.current = 'main_menu'
@@ -444,6 +593,7 @@ class GameScreenManager(Screen):
         self.current_row = 0
         self.current_col = 0
         self.gamebox_layout.reset()
+        self.virtual_keyboard.reset_keyboard()
         self.back_to_menu()
     
     def force_menu(self, popup):
@@ -453,6 +603,7 @@ class GameScreenManager(Screen):
         popup.dismiss()
         self.winning_streak = 0
         self.update_stats_display()
+        self.virtual_keyboard.reset_keyboard()
         self.back_to_menu_with_reset(None)
 
 
