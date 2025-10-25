@@ -122,11 +122,12 @@ class GameBoxLayout(StackLayout):
         self.num_tries = 6
         self.hidden_text = hidden_text.upper()
         self.max_word_length = len(self.hidden_text)
+        self.is_letter_revealed = [False] * self.max_word_length
         self.width = self.max_word_length * box_size + (self.max_word_length-1) * spacing + 2 * spacing 
         self.height = self.num_tries * box_size + (self.num_tries-1) * spacing + 2 * spacing
         self.box_state = {}
         for i in range(self.num_tries * self.max_word_length):
-            self.box_state[i] = 1  # possible states: 1 (changable), 0 (locked)
+            self.box_state[i] = 1  # possible states:  0 (locked), 1 (changable), 2 (revealed)
 
         with self.canvas.before:
             Color(0.2, 0.2, 0.2, 1) # Dark gray background
@@ -146,6 +147,21 @@ class GameBoxLayout(StackLayout):
     def update_hidden_text(self, new_hidden_text):
         self.hidden_text = new_hidden_text.upper()
         self.max_word_length = len(self.hidden_text)
+
+    def reveal_letter(self, index):
+        """
+        Reveal the letter at the given index on the board
+        Args:
+            index (int): Index of the letter in the hidden text
+        """
+        self.is_letter_revealed[index] = True
+        for row in range(self.num_tries):
+            for col in range(self.max_word_length):
+                if col == index:
+                    self.add_letter_at(row, col, self.hidden_text[index])
+                    self.set_box_state(row, col, 2)  # set to revealed
+        return self
+
 
     def reset(self):
         for word_box in self.children:
@@ -172,7 +188,7 @@ class GameBoxLayout(StackLayout):
             word_box = self.children[len(self.children) - 1 - index]
             letter = word_box.text
             if not letter:
-                return 0, {}  # Incomplete row, cannot check
+                return 0, {}  # incomplete row
         
         for c in range(self.max_word_length):
             index = cur_row * self.max_word_length + c
@@ -227,28 +243,28 @@ class GameBoxLayout(StackLayout):
 
     def set_box_state(self, row, col, state: int): # force to be an int
         """
-        Set the state of a box (locked/unlocked)
+        Set the state of a box
 
         Args:
             row (int): Row index
             col (int): Column index
-            state (int): State to set (0 for locked, 1 for changable)
+            state (int): State to set (0 for locked, 1 for changable, 2 for revealed)
         """
         index = row * self.max_word_length + col
         self.box_state[index] = state
         child_index = len(self.children) - 1 - index
         word_box = self.children[child_index]
         
-        # Clear the canvas and redraw with the new color
         word_box.canvas.before.clear()
         with word_box.canvas.before:
             if state == 0:
                 Color(0.8, 0.8, 0.8, 1)  # Light gray for locked boxes
-            else:
+            elif state == 1:
                 Color(1, 1, 1, 1)  # White for changable boxes
+            elif state == 2:
+                Color(0.6, 1, 0.6, 1)  # Light green for revealed boxes
             word_box.rect = Rectangle(size=word_box.size, pos=word_box.pos)
         
-        # Ensure the rectangle position and size are updated
         word_box.rect.pos = word_box.pos
         word_box.rect.size = word_box.size
         
@@ -431,17 +447,7 @@ class GameScreenManager(Screen):
         return True
     
     def gacha(self):
-        """
-        Trigger the gacha animation
-        """
-        # Get the gacha animation screen from the screen manager
-        gacha_screen = self.manager.get_screen('gacha_animation')
-        
-        # Switch to the gacha animation screen
         self.manager.current = 'gacha_animation'
-        
-        # After animation completes, the result_func will be set
-        # We'll need to check it when returning to game screen
     
     def apply_gacha_result(self, result_func):
         """

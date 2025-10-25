@@ -33,7 +33,7 @@ class GachaBox(BoxLayout):
         self.func = None
         
         with self.canvas.before:
-            Color(rarity_color)
+            Color(*rarity_color)
             self.bg_rect = Rectangle(pos=self.pos, size=self.size)
         
         self.bind(pos=self.update_rect, size=self.update_rect)
@@ -61,22 +61,19 @@ class GachaBox(BoxLayout):
 
 
 class GachaAnimationScreen(Screen):
-    """Screen that shows the CSGO-style gacha animation"""
-    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.orientation = 'vertical'
         self.gacha_system = Gacha()
-        self.gacha_items = [
-            # Bless items (60% total)
-            {'type': 'Bless', 'name': 'Remove Curse', 'func': self.gacha_system.remove_curse, 'weight': 0.4, 'color': (0.4, 0.7, 1.0, 1)},
-            {'type': 'Bless', 'name': 'Add Tries', 'func': self.gacha_system.add_tries, 'weight': 0.19, 'color': (0.5, 0.8, 1.0, 1)},
-            {'type': 'Bless', 'name': 'Instant Win', 'func': self.gacha_system.win_game, 'weight': 0.01, 'color': (1.0, 0.84, 0.0, 1)},
+        self.gacha_items = [ # [0.17, 0.3, 0.03, 0.12, 0.25, 0.1, 0.03]
+            {'type': 'Curse', 'name': 'Remove Tries', 'func': self.gacha_system.remove_tries, 'weight': 0.17, 'color': (0.6, 0.1, 0.1, 1)},
+            {'type': 'Curse', 'name': 'Add Curse', 'func': self.gacha_system.add_curse, 'weight': 0.3, 'color': (0.8, 0.2, 0.2, 1)},
+            {'type': 'Curse', 'name': 'Instant Lose', 'func': self.gacha_system.lose_game, 'weight': 0.03, 'color': (0.3, 0.0, 0.0, 1)},
 
-            # Curse items (40% total)
-            {'type': 'Curse', 'name': 'Add Curse', 'func': self.gacha_system.add_curse, 'weight': 0.4, 'color': (0.8, 0.2, 0.2, 1)},
-            {'type': 'Curse', 'name': 'Remove Tries', 'func': self.gacha_system.remove_tries, 'weight': 0.19, 'color': (0.6, 0.1, 0.1, 1)},
-            {'type': 'Curse', 'name': 'Instant Lose', 'func': self.gacha_system.lose_game, 'weight': 0.01, 'color': (0.3, 0.0, 0.0, 1)},
+            {'type': 'Bless', 'name': 'Add Tries', 'func': self.gacha_system.add_tries, 'weight': 0.12, 'color': (0.5, 0.8, 1.0, 1)},
+            {'type': 'Bless', 'name': 'Remove Curse', 'func': self.gacha_system.remove_curse, 'weight': 0.25, 'color': (0.4, 0.7, 1.0, 1)},
+            {'type': 'Bless', 'name': 'Hint One Letter', 'func': self.gacha_system.hint_one_letter, 'weight': 0.1, 'color': (0.6, 0.8, 0.6, 1)},
+            {'type': 'Bless', 'name': 'Instant Win', 'func': self.gacha_system.win_game, 'weight': 0.03, 'color': (1.0, 0.84, 0.0, 1)},
         ]
         self.result_func = None
         self.setup_ui()
@@ -287,14 +284,3 @@ class GachaAnimationScreen(Screen):
             self.result_func = None # reset
         
         self.manager.current = 'game_screen'
-
-
-class GachaAnimationDemo(BoxLayout):
-    """Standalone demo for testing"""
-    
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.orientation = 'vertical'
-        
-        screen = GachaAnimationScreen()
-        self.add_widget(screen)
