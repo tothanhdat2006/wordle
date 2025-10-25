@@ -53,7 +53,6 @@ class MainMenuManager(Screen):
             texture_size=instruction_label.setter('size')
         )
         scroll_view.add_widget(instruction_label)
-        content.add_widget(scroll_view)
         
         close_btn = Button(
             text='Got it!',
@@ -63,6 +62,7 @@ class MainMenuManager(Screen):
             background_normal='',
             background_color=(0.3, 0.7, 0.3, 1)
         )
+        content.add_widget(scroll_view)
         content.add_widget(close_btn)
         
         popup = Popup(
@@ -74,7 +74,6 @@ class MainMenuManager(Screen):
             auto_dismiss=False,
             separator_color=(0.3, 0.7, 0.3, 1)
         )
-        
         close_btn.bind(on_press=popup.dismiss)
         popup.open()
 

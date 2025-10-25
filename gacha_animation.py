@@ -72,11 +72,19 @@ class GachaAnimationScreen(Screen):
 
             {'type': 'Bless', 'name': 'Add Tries', 'func': self.gacha_system.add_tries, 'weight': 0.12, 'color': (0.5, 0.8, 1.0, 1)},
             {'type': 'Bless', 'name': 'Remove Curse', 'func': self.gacha_system.remove_curse, 'weight': 0.25, 'color': (0.4, 0.7, 1.0, 1)},
-            {'type': 'Bless', 'name': 'Hint One Letter', 'func': self.gacha_system.hint_one_letter, 'weight': 0.1, 'color': (0.6, 0.8, 0.6, 1)},
+            {'type': 'Bless', 'name': 'Hint One Letter', 'func': self.gacha_system.hint_one_letter, 'weight': 0.9, 'color': (0.6, 0.8, 0.6, 1)},
             {'type': 'Bless', 'name': 'Instant Win', 'func': self.gacha_system.win_game, 'weight': 0.03, 'color': (1.0, 0.84, 0.0, 1)},
         ]
         self.result_func = None
         self.setup_ui()
+
+    def reset(self):
+        """
+        Reset the gacha animation screen state
+        """
+        self.result_label.text = 'Press "Open Box" to start!'
+        self.result_func = None
+        self.open_button.disabled = False
     
     def setup_ui(self):
         """
@@ -119,7 +127,6 @@ class GachaAnimationScreen(Screen):
         self.scroll_container.width = 0
         
         self.animation_container.add_widget(self.scroll_container)
-        main_layout.add_widget(self.animation_container)
         
         self.result_label = Label(
             text='Press "Open Box" to start!',
@@ -127,7 +134,6 @@ class GachaAnimationScreen(Screen):
             markup=True,
             size_hint_y=0.15
         )
-        main_layout.add_widget(self.result_label)
         
         button_layout = BoxLayout(
             orientation='horizontal',
@@ -154,6 +160,8 @@ class GachaAnimationScreen(Screen):
         
         button_layout.add_widget(self.open_button)
         button_layout.add_widget(back_button)
+        main_layout.add_widget(self.animation_container)
+        main_layout.add_widget(self.result_label)
         main_layout.add_widget(button_layout)
         
         self.add_widget(main_layout)
@@ -272,8 +280,6 @@ class GachaAnimationScreen(Screen):
                 f'[color={color}]{winning_item["name"]}[/color]![/size][/b]'
             )
             self.result_func = winning_item['func']
-        
-        self.open_button.disabled = False
     
     def go_back_game_screen(self, *args):
         game_screen = self.manager.get_screen('game_screen')
@@ -282,5 +288,8 @@ class GachaAnimationScreen(Screen):
         if self.result_func:
             game_screen.apply_gacha_result(self.result_func)
             self.result_func = None # reset
+
+        # reset gacha state
+        self.reset()
         
         self.manager.current = 'game_screen'

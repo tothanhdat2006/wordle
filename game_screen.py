@@ -160,8 +160,6 @@ class GameBoxLayout(StackLayout):
                 if col == index:
                     self.add_letter_at(row, col, self.hidden_text[index])
                     self.set_box_state(row, col, 2)  # set to revealed
-        return self
-
 
     def reset(self):
         for word_box in self.children:
@@ -196,6 +194,7 @@ class GameBoxLayout(StackLayout):
             letter = word_box.text
             
             word_box.canvas.before.clear() #important!!!!!!!!!!!!!
+            word_box.color = (1, 1, 1, 1)  # Set text color to white for visibility
             
             if word_box.text == self.hidden_text[c]:
                 num_corrects += 1
@@ -224,8 +223,7 @@ class GameBoxLayout(StackLayout):
     def add_letter_at(self, row, col, letter):
         index = row * self.max_word_length + col
         if 0 <= index < len(self.children):
-            print(f"Adding letter '{letter}' at row {row}, col {col}, box_state = {self.box_state.get(index)}")
-            if self.box_state.get(index) != 0:
+            if self.box_state.get(index) == 1:
                 self.children[len(self.children) - 1 - index].text = letter.upper()
                 return 1
             else:
@@ -234,14 +232,14 @@ class GameBoxLayout(StackLayout):
     def delete_letter_at(self, row, col):
         index = row * self.max_word_length + col
         if 0 <= index < len(self.children):
-            if self.box_state.get(index) != 0:
+            if self.box_state.get(index) == 1:
                 self.children[len(self.children) - 1 - index].text = ''
                 return 1
             else:
                 return 0
 
 
-    def set_box_state(self, row, col, state: int): # force to be an int
+    def set_box_state(self, row, col, state: int): # force state to be an int
         """
         Set the state of a box
 
@@ -379,16 +377,31 @@ class GameScreenManager(Screen):
             key (str): The key pressed ('backspace', 'enter', or a letter)
         """
         if key == 'backspace':
-            is_delete = self.gamebox_layout.delete_letter_at(self.current_row, self.current_col-1)
-            if is_delete:
-                self.current_col = max(0, self.current_col - 1)
-            else:
-                while self.current_col - 1 >= 0:
-                    self.current_col -= 1
-                    is_delete = self.gamebox_layout.delete_letter_at(self.current_row, self.current_col - 1)
-                    if is_delete:
+            print(f"Trying to delete letter at row {self.current_row}, col {self.current_col}")
+            if self.current_col > 0:
+                is_delete = self.gamebox_layout.delete_letter_at(self.current_row, self.current_col-1)
+                if is_delete:
+                    self.current_col = max(0, self.current_col - 1)
+                else:
+                    while self.current_col - 1 >= 0:
                         self.current_col -= 1
-                        return True
+                        is_delete = self.gamebox_layout.delete_letter_at(self.current_row, self.current_col - 1)
+                        if is_delete:
+                            self.current_col = max(0, self.current_col - 1)
+                            return True
+        elif len(key) == 1 and 'a' <= key <= 'z':
+            print(f"Trying to add letter '{key.upper()}' at row {self.current_row}, col {self.current_col}")
+            if self.current_col < self.max_word_length:
+                is_add = self.gamebox_layout.add_letter_at(self.current_row, self.current_col, key.upper())
+                if is_add:
+                    self.current_col += 1
+                else:
+                    while self.current_col + 1 < self.max_word_length:
+                        self.current_col += 1  # skip locked box
+                        is_add = self.gamebox_layout.add_letter_at(self.current_row, self.current_col, key.upper())
+                        if is_add:
+                            self.current_col += 1
+                            return True
         elif key == 'enter':
             num_correct, letter_states = self.gamebox_layout.check_current_row(self.current_row)
             if letter_states == {}:
@@ -409,18 +422,6 @@ class GameScreenManager(Screen):
             # Game over state
             elif self.current_row >= self.num_tries:
                 self.handle_game_over()
-        elif len(key) == 1 and 'a' <= key <= 'z':
-            if self.current_col < self.max_word_length:
-                is_add = self.gamebox_layout.add_letter_at(self.current_row, self.current_col, key.upper())
-                if is_add:
-                    self.current_col += 1
-                else:
-                    while self.current_col + 1 < self.max_word_length:
-                        self.current_col += 1  # skip locked box
-                        is_add = self.gamebox_layout.add_letter_at(self.current_row, self.current_col, key.upper())
-                        if is_add:
-                            self.current_col += 1
-                            return True
 
         return True
 

@@ -34,6 +34,7 @@ class Gacha:
         if unrevealed_indices:
             index_to_reveal = random.choice(unrevealed_indices)
             gamebox_layout.reveal_letter(index_to_reveal)
+            gamebox_layout.set_box_state(current_row, index_to_reveal, 2)  # revealed
             print(f"Hint: Revealed letter at index {index_to_reveal}")
         else:
             print("No letters to reveal.")
@@ -69,9 +70,3 @@ class Gacha:
     def lose_game(self, gamebox_layout, current_row):
         print("Caused the player to lose the game instantly!")
         return None
-
-    def random_event(self, gamebox_layout, current_row):
-        events = [self.remove_tries, self.add_curse, self.lose_game, 
-                  self.add_tries, self.remove_curse, self.hint_one_letter, self.win_game]
-        event = random.choices(events, weights=[0.17, 0.3, 0.03, 0.12, 0.25, 0.1, 0.03], k=1)[0]
-        return event(gamebox_layout, current_row)
