@@ -1,5 +1,5 @@
 # Gacha Wordle
-![Main menu](assets\mainmenu.png)
+![Main menu](assets/mainmenu.png)
 A desktop implementation of the popular Wordle game, but featuring a unique **Gacha System** that adds randomized power-ups and challenges to the classic gameplay!
 
 ## Features
@@ -11,7 +11,7 @@ A desktop implementation of the popular Wordle game, but featuring a unique **Ga
 
 ## How to Play
 
-![Play](assets\play.png)
+![Play](assets/play.png)
 
 1. **Guess the word** - Type a 5-letter word using your keyboard and press Enter to submit your guess
 2. **Check feedback**:
@@ -57,7 +57,7 @@ python main.py
 
 ## Gacha System
 
-![Gacha box](assets\gachabox.png)
+![Gacha box](assets/gachabox.png)
 The Gacha system adds a unique twist to traditional Wordle gameplay. Players can press the "ROLL DICE" button to open a gacha box that will randomly grant either a **blessing** (helpful effect) or a **curse** (hindering effect).
 
 ### Gacha Items
