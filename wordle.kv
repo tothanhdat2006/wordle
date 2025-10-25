@@ -12,7 +12,7 @@
         orientation: 'vertical'
         padding: 50
         spacing: 30
-        size_hint: (0.6, 0.5)
+        size_hint: (0.6, 0.6)
         pos_hint: {'center_x': 0.5, 'center_y': 0.5}
         
         Widget:
@@ -49,6 +49,27 @@
                     pos: self.pos
                     size: self.size
                     radius: [10,]
+
+        Button:
+            id: instruction_display_btn
+            text: 'HOW TO PLAY'
+            font_size: '20sp'
+            bold: True
+            size_hint: (0.5, None)
+            height: '50dp'
+            pos_hint: {'center_x': 0.5}
+            background_normal: ''
+            background_color: 0.2, 0.4, 0.7, 1  # Blue button to differentiate from start
+            on_press: root.show_instruction()
+            canvas.before:
+                Color:
+                    rgba: 0.2, 0.4, 0.7, 1 if self.state == 'normal' else 0.15, 0.3, 0.55, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [10,]
+
+
         Label:
             text: '[i]By [b][color=6ac764]24127153[/color][/b][/i]'
             markup: True
