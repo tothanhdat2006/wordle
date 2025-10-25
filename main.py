@@ -14,7 +14,7 @@ from gacha_animation import GachaAnimationScreen
 """
 Wordle game main application
 """
-class WordleApp(App):
+class GachaWordleApp(App):
     def build(self):
         Window.size = (1080, 720)
         sm = ScreenManager()
@@ -47,4 +47,4 @@ class WordleApp(App):
 
 if __name__ == '__main__':
     Builder.load_file('./wordle.kv')
-    WordleApp().run()
+    GachaWordleApp().run()

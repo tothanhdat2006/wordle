@@ -113,12 +113,13 @@ class VirtualKeyboard(BoxLayout):
 Game board layout
 """
 class GameBoxLayout(StackLayout):
-    def __init__(self, hidden_text, **kwargs):
+    def __init__(self, hidden_text, word_list, **kwargs):
         super().__init__(**kwargs)
         box_size = 60
         spacing = 10
         self.size_hint = (None, None)
 
+        self.word_list = word_list
         self.num_tries = 6
         self.hidden_text = hidden_text.upper()
         self.max_word_length = len(self.hidden_text)
@@ -180,6 +181,7 @@ class GameBoxLayout(StackLayout):
         """
         num_corrects = 0
         letter_states = {}
+        guessed_letter = []
         # precheck
         for c in range(self.max_word_length):
             index = cur_row * self.max_word_length + c
@@ -187,6 +189,10 @@ class GameBoxLayout(StackLayout):
             letter = word_box.text
             if not letter:
                 return 0, {}  # incomplete row
+            guessed_letter.append(letter)
+        guessed_letter = "".join(guessed_letter) 
+        if guessed_letter not in self.word_list:
+            return 0, {}  # invalid word
         
         for c in range(self.max_word_length):
             index = cur_row * self.max_word_length + c
@@ -287,7 +293,13 @@ class GameScreenManager(Screen):
             "crane", "flame", "brick", "sword", "cloud",
             "coder", "debug", "array", "stack", "queue",
             "globe", "flock", "brave", "charm", "dwarf",
-            "lunar", "comet", "popup", "pixel", "vivid"
+            "lunar", "comet", "popup", "pixel", "vivid",
+            "frost", "blaze", "lemon", "candy", "baker",
+            "burst", "quest", "dream", "tiger", "zebra",
+            "nerdy", "grant", "juice", "stove", "scale",
+            "cigar", "movie", "focus", "piano", "robot",
+            "evade", "watch", "erode", "refer", "awake",
+            "serve"
         ]
         self.num_tries = 6
         self.hidden_text = self.keyword_generator()
@@ -335,7 +347,7 @@ class GameScreenManager(Screen):
         
         # Game board
         self.game_main_layout = AnchorLayout(anchor_x='center', anchor_y='center', size_hint_y=0.6)
-        self.gamebox_layout = GameBoxLayout(hidden_text=self.hidden_text)
+        self.gamebox_layout = GameBoxLayout(hidden_text=self.hidden_text, word_list=self.word_list)
         self.game_main_layout.add_widget(self.gamebox_layout)
         
         # Virtual keyboard

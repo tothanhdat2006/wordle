@@ -73,7 +73,7 @@ class GachaAnimationScreen(Screen):
             {'type': 'Bless', 'name': 'Add Tries', 'func': self.gacha_system.add_tries, 'weight': 0.12, 'color': (0.5, 0.8, 1.0, 1)},
             {'type': 'Bless', 'name': 'Remove Curse', 'func': self.gacha_system.remove_curse, 'weight': 0.25, 'color': (0.4, 0.7, 1.0, 1)},
             {'type': 'Bless', 'name': 'Hint One Letter', 'func': self.gacha_system.hint_one_letter, 'weight': 0.1, 'color': (0.6, 0.8, 0.6, 1)},
-            {'type': 'Bless', 'name': 'Instant Win', 'func': self.gacha_system.win_game, 'weight': 0.03, 'color': (1.0, 0.84, 0.0, 1)},
+            {'type': 'Bless', 'name': 'Instant Win', 'func': self.gacha_system.win_game, 'weight': 0.03, 'color': (1.0, 0.84, 0.0, 1)}
         ]
         self.result_func = None
         self.setup_ui()
