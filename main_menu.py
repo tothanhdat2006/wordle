@@ -17,12 +17,16 @@ class MainMenuManager(Screen):
         instruction_text = (
             "[b][size=24sp][color=6ac764]Welcome to Gacha Wordle![/color][/size][/b]\n\n"
             "[b][size=20sp]How to Play:[/size][/b]\n"
-            "• Guess the hidden 5-letter word within 6 tries\n"
-            "• Each guess must be a valid word\n"
-            "• After each guess, tiles change color:\n"
+            "- Guess the hidden 5-letter word within 6 tries\n"
+            "- Each guess can either be a valid or a invalid word (due to curse mechanics)\n"
+            "- After each guess, tiles change color:\n"
             "  [b][color=6aaa64]GREEN[/color][/b] - Letter is correct and in the right position\n"
             "  [b][color=c9b458]YELLOW[/color][/b] - Letter is in the word but wrong position\n"
             "  [b][color=787c7e]GRAY[/color][/b] - Letter is not in the word\n\n"
+            "- Type of boxes:\n"
+            "  [b][color=ff0000]RED CURSED BOXES[/color][/b] - Cannot be used for guessing\n"
+            "  [b][color=00ff00]GREEN BOXES[/color][/b] - Boxes with revealed letters\n"
+            "  [b][color=ffffff]WHITE BOXES[/color][/b] - Changable boxes\n\n"
             "[b][size=20sp]Gacha System:[/size][/b]\n"
             "Use gacha items during gameplay for advantages or surprises!\n\n"
             "[b][size=18sp]Gacha Item Chances:[/size][/b]\n"
@@ -43,7 +47,7 @@ class MainMenuManager(Screen):
             text=instruction_text,
             markup=True,
             size_hint_y=None,
-            text_size=(500, None),
+            text_size=(800, None),
             halign='left',
             valign='top',
             font_size='16sp',

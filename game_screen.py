@@ -159,6 +159,7 @@ class GameBoxLayout(StackLayout):
         for row in range(self.num_tries):
             for col in range(self.max_word_length):
                 if col == index:
+                    self.set_box_state(row, col, 1) # set to changable to change the text
                     self.add_letter_at(row, col, self.hidden_text[index])
                     self.set_box_state(row, col, 2)  # set to revealed
 
@@ -190,18 +191,15 @@ class GameBoxLayout(StackLayout):
             if not letter:
                 return 0, {}  # incomplete row
             guessed_letter.append(letter)
-        guessed_letter = "".join(guessed_letter) 
-        if guessed_letter not in self.word_list:
-            return 0, {}  # invalid word
-        
+            
         for c in range(self.max_word_length):
             index = cur_row * self.max_word_length + c
             word_box = self.children[len(self.children) - 1 - index]
             letter = word_box.text
             
             word_box.canvas.before.clear() #important!!!!!!!!!!!!!
-            word_box.color = (1, 1, 1, 1)  # Set text color to white for visibility
-            
+            word_box.color = (0, 0, 0, 1) 
+
             if word_box.text == self.hidden_text[c]:
                 num_corrects += 1
                 letter_states[letter] = 'correct'
@@ -210,14 +208,14 @@ class GameBoxLayout(StackLayout):
                     word_box.rect = Rectangle(size=word_box.size, pos=word_box.pos)
 
             elif word_box.text in self.hidden_text:
-                if letter not in letter_states or letter_states[letter] != 'correct':
+                if letter_states.get(letter, '-1') == '-1' or letter_states[letter] != 'correct':
                     letter_states[letter] = 'present'
                 with word_box.canvas.before:
                     Color(1, 1, 0, 1)  # Yellow (for correct letters in wrong position)
                     word_box.rect = Rectangle(size=word_box.size, pos=word_box.pos)
 
             else:
-                if letter not in letter_states:
+                if letter_states.get(letter, '-1') == '-1':
                     letter_states[letter] = 'absent'
 
                 with word_box.canvas.before:
@@ -262,7 +260,7 @@ class GameBoxLayout(StackLayout):
         word_box.canvas.before.clear()
         with word_box.canvas.before:
             if state == 0:
-                Color(0.8, 0.8, 0.8, 1)  # Light gray for locked boxes
+                Color(1, 0, 0, 1)  # ff0000 for locked boxes
             elif state == 1:
                 Color(1, 1, 1, 1)  # White for changable boxes
             elif state == 2:
@@ -299,7 +297,7 @@ class GameScreenManager(Screen):
             "nerdy", "grant", "juice", "stove", "scale",
             "cigar", "movie", "focus", "piano", "robot",
             "evade", "watch", "erode", "refer", "awake",
-            "serve"
+            "serve", "query", "gamer", "noble", "pride"
         ]
         self.num_tries = 6
         self.hidden_text = self.keyword_generator()
@@ -389,7 +387,6 @@ class GameScreenManager(Screen):
             key (str): The key pressed ('backspace', 'enter', or a letter)
         """
         if key == 'backspace':
-            print(f"Trying to delete letter at row {self.current_row}, col {self.current_col}")
             if self.current_col > 0:
                 is_delete = self.gamebox_layout.delete_letter_at(self.current_row, self.current_col-1)
                 if is_delete:
@@ -402,7 +399,6 @@ class GameScreenManager(Screen):
                             self.current_col = max(0, self.current_col - 1)
                             return True
         elif len(key) == 1 and 'a' <= key <= 'z':
-            print(f"Trying to add letter '{key.upper()}' at row {self.current_row}, col {self.current_col}")
             if self.current_col < self.max_word_length:
                 is_add = self.gamebox_layout.add_letter_at(self.current_row, self.current_col, key.upper())
                 if is_add:
