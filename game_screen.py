@@ -333,9 +333,9 @@ class GameScreenManager(Screen):
         stats_layout.add_widget(self.games_label)
         stats_layout.add_widget(self.wins_label)
 
-        # roll dice button
+        # gacha button
         self.gacha_btn = Button(
-            text='ROLL DICE',
+            text='GACHA',
             size_hint_x=0.5,
             background_color=(0.3, 0.5, 0.8, 1),
             bold=True,
