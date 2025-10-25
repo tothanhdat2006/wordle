@@ -1,6 +1,6 @@
-# Wordle Game
+# Gacha Wordle
 
-A desktop implementation of the popular Wordle game built with Python and Kivy, featuring a unique **Gacha System** that adds randomized power-ups and challenges to the classic gameplay!
+A desktop implementation of the popular Wordle game, but featuring a unique **Gacha System** that adds randomized power-ups and challenges to the classic gameplay!
 
 ## Features
 
